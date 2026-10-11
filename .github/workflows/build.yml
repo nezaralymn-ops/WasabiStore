@@ -1,0 +1,25 @@
+name: Build APK
+on:
+  workflow_dispatch:
+  push:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: unzip -q WasabiStore.zip
+      - run: if [ -f sheet_url.txt ]; then cp sheet_url.txt WasabiStore/app/src/main/assets/sheet_url.txt; fi
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.9
+      - run: gradle assembleDebug
+        working-directory: WasabiStore
+      - run: gh release create v${{ github.run_number }} WasabiStore/app/build/outputs/apk/debug/app-debug.apk --title "Wasabi Store" --notes "APK"
+        env:
+          GH_TOKEN: ${{ github.token }}
